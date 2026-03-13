@@ -1,0 +1,122 @@
+OpenZep Proprietary License
+Version 1.0, March 2026
+
+Copyright (c) 2026 N1nEmAn (https://github.com/N1nEmAn)
+All rights reserved.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEFINITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"Software" refers to OpenZep and all associated source code, documentation,
+configuration files, and related materials in this repository.
+
+"Author" refers to N1nEmAn (https://github.com/N1nEmAn), the original
+creator and sole copyright holder of this Software.
+
+"Commercial Use" means any use of the Software, in whole or in part,
+that is primarily intended for or directed toward commercial advantage
+or monetary compensation.
+
+"Derivative Work" means any work that is based on or derived from the
+Software, including but not limited to modifications, adaptations,
+translations, or software that incorporates any portion of the Software.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GRANTED PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Subject to the conditions below, you are granted a limited,
+non-exclusive, non-transferable, revocable license to:
+
+1. Use the Software for personal, non-commercial purposes.
+2. Study the source code for educational purposes.
+3. Self-host the Software for personal or internal organizational use,
+   provided no revenue is generated from such use.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All permitted uses are subject to the following conditions:
+
+1. ATTRIBUTION REQUIRED
+   Any redistribution, public display, publication, fork, or Derivative
+   Work must include all of the following in a prominent location:
+
+   a) The original author's name: N1nEmAn
+   b) A link to the original repository: https://github.com/N1nEmAn/openzep
+   c) A clear statement that the work is based on or derived from OpenZep
+   d) The original copyright notice: "Copyright (c) 2026 N1nEmAn"
+
+   Example attribution:
+   "Based on OpenZep by N1nEmAn (https://github.com/N1nEmAn/openzep)
+    Copyright (c) 2026 N1nEmAn. All rights reserved."
+
+2. NO REMOVAL OF NOTICES
+   You may not remove, alter, or obscure any copyright notice, attribution
+   notice, or license text included in the Software.
+
+3. NO SUBLICENSING
+   You may not sublicense, sell, rent, lease, or transfer the Software
+   or any rights granted herein to any third party.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESTRICTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The following are expressly prohibited without prior written permission
+from the Author:
+
+1. COMMERCIAL USE BY THIRD PARTIES
+   You may not use the Software or any Derivative Work for Commercial Use
+   without a separate written commercial license agreement signed by the Author.
+   This includes but is not limited to:
+   - Offering the Software as a hosted/SaaS service
+   - Incorporating the Software into a commercial product
+   - Using the Software to provide paid services to third parties
+
+2. DISTRIBUTION WITHOUT ATTRIBUTION
+   You may not distribute, publish, or make publicly available the Software
+   or any Derivative Work without full attribution as specified above.
+
+3. MISREPRESENTATION OF ORIGIN
+   You may not represent that you are the original author of the Software
+   or remove/alter attribution to the original author.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMERCIAL LICENSING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Author (N1nEmAn) retains exclusive rights to Commercial Use of this
+Software. Third parties wishing to use this Software for commercial
+purposes must obtain a separate written commercial license from the Author.
+
+To inquire about commercial licensing, contact the Author at:
+https://github.com/N1nEmAn
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISCLAIMER OF WARRANTIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GOVERNING LAW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This license shall be governed by and construed in accordance with the
+laws of the People's Republic of China, without regard to its conflict
+of law provisions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For the full text of this license and to report violations, visit:
+https://github.com/N1nEmAn/openzep
+
+Copyright (c) 2026 N1nEmAn. All rights reserved.
