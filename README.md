@@ -91,36 +91,6 @@ client = ZepClient(
 ![Architecture](./docs/architecture.png)
 
 </div>
-
-```
-┌──────────────────────────────────────────────┐
-│         Your Application (Zep Client)        │
-│      zep-python SDK / direct HTTP calls      │
-└─────────────────────┬────────────────────────┘
-                      │ Zep V2 REST API
-                      ▼
-┌──────────────────────────────────────────────┐
-│              OpenZep Server                  │
-│              (FastAPI + Python)              │
-│                                              │
-│  ┌─────────────┐  ┌──────────┐  ┌────────┐  │
-│  │  Sessions   │  │  Memory  │  │ Users  │  │
-│  │    API      │  │   API    │  │  API   │  │
-│  └──────┬──────┘  └────┬─────┘  └───┬────┘  │
-│         └──────────────┼────────────┘       │
-│                        ▼                    │
-│              Graphiti Engine                │
-│         (Knowledge Graph Core)              │
-└────────────────┬───────────────┬────────────┘
-                 │               │
-         ┌───────▼──────┐ ┌─────▼────────────┐
-         │    Neo4j     │ │  Any OpenAI-      │
-         │  (Graph DB)  │ │  Compatible LLM   │
-         └──────────────┘ │  Claude/GPT/      │
-                          │  SiliconFlow etc. │
-                          └──────────────────┘
-```
-
 ---
 
 ## API Endpoints
