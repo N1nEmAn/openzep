@@ -240,11 +240,7 @@ nohup .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 > openzep.log 2>&1 &
 
 ## Star History
 
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=N1nEmAn/openzep&type=Date)](https://star-history.com/#N1nEmAn/openzep&Date)
-
-</div>
+[![Star History Chart](https://api.star-history.com/image?repos=N1nEmAn/openzep&type=date&legend=top-left)](https://www.star-history.com/?repos=N1nEmAn%2Fopenzep&type=date&legend=top-left)
 
 ---
 
