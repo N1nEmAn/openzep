@@ -35,6 +35,7 @@ app.include_router(sessions.router)
 app.include_router(memory.router)
 app.include_router(messages.router)
 app.include_router(users.router)
+app.include_router(users._compat_router)
 app.include_router(graph.router)
 app.include_router(facts.router)
 

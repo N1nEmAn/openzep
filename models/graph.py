@@ -4,6 +4,52 @@ from typing import Any
 from pydantic import BaseModel
 
 
+class GraphAddRequest(BaseModel):
+    data: str
+    type: str = "text"
+    graph_id: str
+    source_description: str = "user"
+    created_at: datetime | None = None
+    user_id: str | None = None
+
+
+class GraphCreateRequest(BaseModel):
+    name: str | None = None
+    graph_id: str | None = None
+
+
+class GraphResponse(BaseModel):
+    graph_id: str
+    name: str
+    created_at: datetime | None = None
+
+
+class NodeListByGraphRequest(BaseModel):
+    limit: int = 100
+    uuid_cursor: str | None = None
+
+
+class EdgeListByGraphRequest(BaseModel):
+    limit: int = 100
+    uuid_cursor: str | None = None
+
+
+class EpisodeResponse(BaseModel):
+    uuid: str
+    name: str
+    content: str
+    source_description: str = ""
+    source: str = "message"
+    created_at: datetime | None = None
+    group_id: str = ""
+
+
+class EntityTypesRequest(BaseModel):
+    entity_types: list[Any] = []
+    edge_types: list[Any] = []
+    graph_ids: list[str] = []
+
+
 class GraphSearchRequest(BaseModel):
     query: str
     user_id: str | None = None
@@ -65,16 +111,25 @@ class EdgeListResponse(BaseModel):
 # ── Batch episode add ─────────────────────────────────────────────────────────
 
 class EpisodeBatchItem(BaseModel):
-    name: str
-    content: str
+    data: str | None = None
+    type: str = "text"
     source_description: str = "batch"
+    created_at: datetime | None = None
+    # legacy fields kept for backward compat
+    name: str | None = None
+    content: str | None = None
     source: str = "message"
     reference_time: datetime | None = None
     uuid: str | None = None
 
+    @property
+    def effective_content(self) -> str:
+        return self.data or self.content or ""
+
 
 class GraphAddBatchRequest(BaseModel):
     graph_id: str
+    user_id: str | None = None
     episodes: list[EpisodeBatchItem]
 
 

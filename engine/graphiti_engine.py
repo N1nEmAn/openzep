@@ -49,6 +49,32 @@ def create_graphiti(s: Settings) -> Graphiti:
     return Graphiti(graph_driver=driver, llm_client=llm_client, embedder=embedder, cross_encoder=reranker)
 
 
+async def add_single_episode(
+    graphiti: Graphiti,
+    graph_id: str,
+    data: str,
+    ep_type: str = "text",
+    source_description: str = "user",
+    created_at: datetime | None = None,
+) -> str:
+    """Add a single episode to the graph, return its name."""
+    ref_time = created_at or datetime.now(timezone.utc)
+    name = f"ep_{graph_id}_{ref_time.timestamp()}"
+    try:
+        source = EpisodeType(ep_type)
+    except ValueError:
+        source = EpisodeType.text
+    await graphiti.add_episode(
+        name=name,
+        episode_body=data,
+        source_description=source_description,
+        reference_time=ref_time,
+        source=source,
+        group_id=graph_id,
+    )
+    return name
+
+
 async def add_messages_to_graph(
     graphiti: Graphiti,
     session_id: str,

@@ -10,3 +10,5 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+/home/N1nE/Progress/202603/mirofish
+mirofish/

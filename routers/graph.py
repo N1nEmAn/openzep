@@ -1,29 +1,99 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 from graphiti_core.edges import EntityEdge
 from graphiti_core.nodes import EntityNode, EpisodicNode
 from graphiti_core.utils.bulk_utils import RawEpisode
 from graphiti_core.utils.maintenance.graph_data_operations import EpisodeType
 
 from deps import get_graphiti, verify_api_key
+from engine.graphiti_engine import add_single_episode
 from models.graph import (
+    EdgeListByGraphRequest,
     EdgeListResponse,
     EdgeResponse,
+    EntityTypesRequest,
+    EpisodeResponse,
     GraphAddBatchRequest,
     GraphAddBatchResponse,
+    GraphAddRequest,
+    GraphCreateRequest,
+    GraphResponse,
     GraphSearchRequest,
     GraphSearchResponse,
     GraphSearchResult,
     GraphStatisticsResponse,
+    NodeListByGraphRequest,
     NodeListResponse,
     NodeResponse,
 )
 
-router = APIRouter(prefix="/api/v2/graph", tags=["graph"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/v2", tags=["graph"], dependencies=[Depends(verify_api_key)])
 
 
-@router.post("/search", response_model=GraphSearchResponse)
+# ── graph.add ─────────────────────────────────────────────────────────────────
+
+@router.post("/graph")
+async def graph_add(body: GraphAddRequest, request: Request):
+    graphiti = get_graphiti(request)
+    name = await add_single_episode(
+        graphiti,
+        graph_id=body.graph_id,
+        data=body.data,
+        ep_type=body.type,
+        source_description=body.source_description,
+        created_at=body.created_at,
+    )
+    return {"uuid": name, "graph_id": body.graph_id}
+
+
+# ── graph.add_batch ───────────────────────────────────────────────────────────
+
+@router.post("/graph-batch", response_model=GraphAddBatchResponse)
+async def graph_add_batch(body: GraphAddBatchRequest, request: Request):
+    graphiti = get_graphiti(request)
+
+    raw_episodes = [
+        RawEpisode(
+            name=ep.name or f"ep_{body.graph_id}_{i}",
+            uuid=ep.uuid,
+            content=ep.effective_content,
+            source_description=ep.source_description,
+            source=EpisodeType.message,
+            reference_time=ep.created_at or ep.reference_time or datetime.now(timezone.utc),
+        )
+        for i, ep in enumerate(body.episodes)
+    ]
+
+    await graphiti.add_episode_bulk(raw_episodes, group_id=body.graph_id)
+
+    return GraphAddBatchResponse(added=len(raw_episodes), graph_id=body.graph_id)
+
+
+# ── graph.set-ontology (no-op compat) ────────────────────────────────────────
+
+@router.post("/graph/set-ontology")
+async def graph_set_ontology(request: Request):
+    # OpenZep/Graphiti does not support custom ontologies; accept and ignore.
+    return {"success": True}
+
+
+# ── graph.create ──────────────────────────────────────────────────────────────
+
+@router.post("/graph/create", response_model=GraphResponse)
+async def graph_create(body: GraphCreateRequest, request: Request):
+    # graphiti has no explicit "create graph" — groups are implicit
+    graph_id = body.graph_id or body.name or f"graph_{datetime.now(timezone.utc).timestamp()}"
+    return GraphResponse(
+        graph_id=graph_id,
+        name=body.name or graph_id,
+        created_at=datetime.now(timezone.utc),
+    )
+
+
+# ── graph.search ──────────────────────────────────────────────────────────────
+
+@router.post("/graph/search", response_model=GraphSearchResponse)
 async def graph_search(body: GraphSearchRequest, request: Request):
     graphiti = get_graphiti(request)
 
@@ -49,19 +119,20 @@ async def graph_search(body: GraphSearchRequest, request: Request):
     return GraphSearchResponse(results=results)
 
 
-@router.get("/node", response_model=NodeListResponse)
+# ── graph.node.get_by_graph_id (POST) ─────────────────────────────────────────
+
+@router.post("/graph/node/graph/{graph_id}", response_model=NodeListResponse)
 async def get_nodes_by_graph_id(
+    graph_id: str,
+    body: NodeListByGraphRequest,
     request: Request,
-    graph_id: str = Query(...),
-    limit: int = Query(100),
-    uuid_cursor: str | None = Query(None),
 ):
     graphiti = get_graphiti(request)
     nodes = await EntityNode.get_by_group_ids(
         graphiti.driver,
         group_ids=[graph_id],
-        limit=limit,
-        uuid_cursor=uuid_cursor,
+        limit=body.limit,
+        uuid_cursor=body.uuid_cursor,
     )
     return NodeListResponse(
         nodes=[
@@ -80,7 +151,9 @@ async def get_nodes_by_graph_id(
     )
 
 
-@router.get("/node/{uuid}", response_model=NodeResponse)
+# ── graph.node.get ────────────────────────────────────────────────────────────
+
+@router.get("/graph/node/{uuid}", response_model=NodeResponse)
 async def get_node_by_uuid(uuid: str, request: Request):
     graphiti = get_graphiti(request)
     node = await EntityNode.get_by_uuid(graphiti.driver, uuid=uuid)
@@ -95,19 +168,45 @@ async def get_node_by_uuid(uuid: str, request: Request):
     )
 
 
-@router.get("/edge", response_model=EdgeListResponse)
+# ── graph.node.get_entity_edges ───────────────────────────────────────────────
+
+@router.get("/graph/node/{uuid}/entity-edges", response_model=list[EdgeResponse])
+async def get_node_entity_edges(uuid: str, request: Request):
+    graphiti = get_graphiti(request)
+    edges = await EntityEdge.get_by_node_uuid(graphiti.driver, node_uuid=uuid)
+    return [
+        EdgeResponse(
+            uuid=e.uuid,
+            name=e.name,
+            group_id=e.group_id,
+            fact=e.fact or "",
+            source_node_uuid=e.source_node_uuid,
+            target_node_uuid=e.target_node_uuid,
+            created_at=getattr(e, "created_at", None),
+            expired_at=getattr(e, "expired_at", None),
+            valid_at=getattr(e, "valid_at", None),
+            invalid_at=getattr(e, "invalid_at", None),
+            episodes=list(getattr(e, "episodes", []) or []),
+            attributes=getattr(e, "attributes", {}) or {},
+        )
+        for e in edges
+    ]
+
+
+# ── graph.edge.get_by_graph_id (POST) ─────────────────────────────────────────
+
+@router.post("/graph/edge/graph/{graph_id}", response_model=EdgeListResponse)
 async def get_edges_by_graph_id(
+    graph_id: str,
+    body: EdgeListByGraphRequest,
     request: Request,
-    graph_id: str = Query(...),
-    limit: int = Query(100),
-    uuid_cursor: str | None = Query(None),
 ):
     graphiti = get_graphiti(request)
     edges = await EntityEdge.get_by_group_ids(
         graphiti.driver,
         group_ids=[graph_id],
-        limit=limit,
-        uuid_cursor=uuid_cursor,
+        limit=body.limit,
+        uuid_cursor=body.uuid_cursor,
     )
     return EdgeListResponse(
         edges=[
@@ -131,28 +230,26 @@ async def get_edges_by_graph_id(
     )
 
 
-@router.post("/episodes/batch", response_model=GraphAddBatchResponse)
-async def add_episode_batch(body: GraphAddBatchRequest, request: Request):
+# ── graph.episode.get ─────────────────────────────────────────────────────────
+
+@router.get("/graph/episodes/{uuid}", response_model=EpisodeResponse)
+async def get_episode_by_uuid(uuid: str, request: Request):
     graphiti = get_graphiti(request)
-
-    raw_episodes = [
-        RawEpisode(
-            name=ep.name,
-            uuid=ep.uuid,
-            content=ep.content,
-            source_description=ep.source_description,
-            source=EpisodeType(ep.source),
-            reference_time=ep.reference_time or datetime.now(timezone.utc),
-        )
-        for ep in body.episodes
-    ]
-
-    await graphiti.add_episode_bulk(raw_episodes, group_id=body.graph_id)
-
-    return GraphAddBatchResponse(added=len(raw_episodes), graph_id=body.graph_id)
+    ep = await EpisodicNode.get_by_uuid(graphiti.driver, uuid=uuid)
+    return EpisodeResponse(
+        uuid=ep.uuid,
+        name=ep.name,
+        content=ep.content,
+        source_description=getattr(ep, "source_description", ""),
+        source=str(getattr(ep, "source", "message")),
+        created_at=getattr(ep, "created_at", None),
+        group_id=getattr(ep, "group_id", ""),
+    )
 
 
-@router.get("/{graph_id}/statistics", response_model=GraphStatisticsResponse)
+# ── graph statistics ──────────────────────────────────────────────────────────
+
+@router.get("/graph/{graph_id}/statistics", response_model=GraphStatisticsResponse)
 async def get_graph_statistics(graph_id: str, request: Request):
     graphiti = get_graphiti(request)
     driver = graphiti.driver
@@ -169,7 +266,9 @@ async def get_graph_statistics(graph_id: str, request: Request):
     )
 
 
-@router.delete("/{graph_id}")
+# ── graph.delete ──────────────────────────────────────────────────────────────
+
+@router.delete("/graph/{graph_id}")
 async def delete_graph(graph_id: str, request: Request):
     graphiti = get_graphiti(request)
     driver = graphiti.driver
@@ -179,3 +278,10 @@ async def delete_graph(graph_id: str, request: Request):
         await graphiti.remove_episode(ep.uuid)
 
     return {"deleted": True, "graph_id": graph_id, "episodes_removed": len(episodes)}
+
+
+# ── entity-types stub ─────────────────────────────────────────────────────────
+
+@router.put("/entity-types")
+async def set_entity_types(body: EntityTypesRequest):
+    return {"message": "ok"}

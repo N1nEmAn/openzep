@@ -158,3 +158,25 @@ async def list_users(
     total = count_row[0] if count_row else 0
     users = [_row_to_user(r) for r in rows]
     return UserListResponse(users=users, total_count=total, row_count=len(users))
+
+
+# ── zep-cloud SDK compat: GET /api/v2/users-ordered ───────────────────────────
+# SDK calls this path for user.list_ordered()
+
+from fastapi import APIRouter as _AR
+_compat_router = _AR(prefix="/api/v2", tags=["users"], dependencies=[Depends(verify_api_key)])
+
+@_compat_router.get("/users-ordered", response_model=UserListResponse)
+async def list_users_ordered(
+    pageNumber: int = 1,
+    pageSize: int = 100,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    offset = (pageNumber - 1) * pageSize
+    rows = await (await db.execute(
+        "SELECT * FROM users LIMIT ? OFFSET ?", (pageSize, offset)
+    )).fetchall()
+    count_row = await (await db.execute("SELECT COUNT(*) FROM users")).fetchone()
+    total = count_row[0] if count_row else 0
+    users = [_row_to_user(r) for r in rows]
+    return UserListResponse(users=users, total_count=total, row_count=len(users))
