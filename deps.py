@@ -12,11 +12,20 @@ def get_graphiti(request: Request) -> Graphiti:
 
 
 def verify_api_key(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Security(bearerScheme),
 ):
     if settings.api_key is None:
         return
-    if credentials is None or credentials.credentials != settings.api_key:
+    # 支持 Bearer 和 Api-Key 两种格式
+    token = None
+    if credentials is not None:
+        token = credentials.credentials
+    else:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.lower().startswith("api-key "):
+            token = auth_header[8:]
+    if token != settings.api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",

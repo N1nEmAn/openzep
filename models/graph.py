@@ -42,6 +42,7 @@ class EpisodeResponse(BaseModel):
     source: str = "message"
     created_at: datetime | None = None
     group_id: str = ""
+    processed: bool = True
 
 
 class EntityTypesRequest(BaseModel):
