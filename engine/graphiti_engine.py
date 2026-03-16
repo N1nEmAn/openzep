@@ -10,12 +10,13 @@ from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerCli
 from graphiti_core.driver.falkordb_driver import FalkorDriver
 from graphiti_core.driver.neo4j_driver import Neo4jDriver
 from graphiti_core.edges import EntityEdge
-from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
+from graphiti_core.embedder.openai import OpenAIEmbedderConfig
 from graphiti_core.llm_client.config import LLMConfig
-from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
 from graphiti_core.nodes import EpisodeType
 
+from engine.compat_embedder import CompatOpenAIEmbedder
 from config import Settings
+from engine.compat_openai_client import CompatOpenAIGenericClient
 
 
 def create_graphiti(s: Settings) -> Graphiti:
@@ -30,14 +31,14 @@ def create_graphiti(s: Settings) -> Graphiti:
         base_url=s.llm_base_url,
         small_model=s.llm_small_model,
     )
-    llm_client = OpenAIGenericClient(llm_config)
+    llm_client = CompatOpenAIGenericClient(llm_config)
 
     embed_config = OpenAIEmbedderConfig(
         api_key=s.embedder_api_key or s.llm_api_key,
         base_url=s.embedder_base_url or s.llm_base_url,
         embedding_model=s.embedder_model,
     )
-    embedder = OpenAIEmbedder(embed_config)
+    embedder = CompatOpenAIEmbedder(embed_config)
 
     reranker = OpenAIRerankerClient(
         config=LLMConfig(
