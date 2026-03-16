@@ -13,6 +13,52 @@ success() { echo -e "${GREEN}[ OK ]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error()   { echo -e "${RED}[ERR ]${NC} $*"; exit 1; }
 
+is_supported_python() {
+    local python_bin="$1"
+    "$python_bin" -c '
+import sys
+sys.exit(0 if sys.version_info[:2] in {(3, 11), (3, 12)} else 1)
+' >/dev/null 2>&1
+}
+
+resolve_python_bin() {
+    local candidates=()
+    local candidate
+    local detected_version=""
+
+    if [ -n "${PYTHON_BIN:-}" ]; then
+        candidates=("${PYTHON_BIN}")
+    else
+        for candidate in python3.12 python3.11 python3; do
+            if command -v "$candidate" >/dev/null 2>&1; then
+                candidates+=("$candidate")
+            fi
+        done
+    fi
+
+    [ "${#candidates[@]}" -gt 0 ] || error "未找到可用的 python3，请先安装 Python 3.11 或 3.12"
+
+    for candidate in "${candidates[@]}"; do
+        if ! command -v "$candidate" >/dev/null 2>&1; then
+            continue
+        fi
+
+        detected_version="$("$candidate" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+        if is_supported_python "$candidate"; then
+            PYTHON_BIN="$candidate"
+            PYTHON_VERSION="$detected_version"
+            return 0
+        fi
+    done
+
+    if command -v python3 >/dev/null 2>&1; then
+        detected_version="$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+        error "本地安装仅支持 Python 3.11 或 3.12（检测到 python3=${detected_version}）。请切换 python3、设置 PYTHON_BIN，或改用 Docker 模式。"
+    fi
+
+    error "未找到受支持的 Python 版本，请安装 Python 3.11 或 3.12，或设置 PYTHON_BIN 指向对应解释器"
+}
+
 prompt_value() {
     local var_name="$1"
     local prompt_text="$2"
@@ -67,9 +113,8 @@ echo -e ""
 # ── 前置依赖检查 ─────────────────────────────
 info "检查前置依赖..."
 command -v docker >/dev/null 2>&1 || error "未找到 docker，请先安装 Docker"
-command -v python3 >/dev/null 2>&1 || error "未找到 python3，请先安装 Python 3.10+"
-PY_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)')
-[ "$PY_MINOR" -ge 10 ] || error "需要 Python 3.10+，当前版本过低"
+resolve_python_bin
+info "使用 Python: ${PYTHON_BIN} (${PYTHON_VERSION})"
 success "前置依赖检查通过"
 echo
 
@@ -174,7 +219,7 @@ echo
 echo -e "${BOLD}── 安装 Python 依赖 ─────────────────────────${NC}"
 if [ ! -d .venv ]; then
     info "创建虚拟环境..."
-    python3 -m venv .venv
+    "$PYTHON_BIN" -m venv .venv
 fi
 info "安装依赖包（首次可能需要几分钟）..."
 .venv/bin/pip install -q --upgrade pip

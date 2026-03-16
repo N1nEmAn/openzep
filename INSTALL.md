@@ -21,6 +21,19 @@ bash install_mirofish.sh
 OPENZEP_INSTALL_MODE=local bash install_mirofish.sh
 ```
 
+本地模式要求 `python3` 为 3.11 或 3.12。先检查：
+
+```bash
+python3 --version
+which python3
+```
+
+注意这里看的是 `python3`，不是 `python`。如果机器上同时装了多个 Python，可以这样指定：
+
+```bash
+PYTHON_BIN=python3.12 OPENZEP_INSTALL_MODE=local bash install_mirofish.sh
+```
+
 ## 交互式安装说明
 
 在 `openzep` 目录执行：

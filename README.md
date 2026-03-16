@@ -8,7 +8,7 @@
 **Self-hosted Zep API-compatible memory service powered by Graphiti knowledge graph.**
 
 [![License](https://img.shields.io/badge/license-OpenZep%20Proprietary-red?style=flat-square)](./LICENSE)
-[![Python](https://img.shields.io/badge/python-3.12+-blue?style=flat-square&logo=python)](https://python.org)
+[![Python](https://img.shields.io/badge/python-3.11--3.12-blue?style=flat-square&logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
 [![Graphiti](https://img.shields.io/badge/graphiti--core-0.28+-orange?style=flat-square)](https://github.com/getzep/graphiti)
 [![Neo4j](https://img.shields.io/badge/Neo4j-5-blue?style=flat-square&logo=neo4j)](https://neo4j.com)
@@ -41,6 +41,12 @@
 
 - Docker & Docker Compose
 - 任意 OpenAI 兼容 LLM API Key
+
+如果你要用 `OPENZEP_INSTALL_MODE=local` 本机运行后端，再额外准备：
+
+- Python 3.11 或 3.12
+- 建议先执行 `python3 --version`
+- 如果系统里同时有多个 Python，可用 `PYTHON_BIN=python3.12 bash setup.sh` 指定解释器
 
 ### 一键启动
 
