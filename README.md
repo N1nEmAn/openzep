@@ -73,6 +73,20 @@ LLM_MODEL=Qwen/Qwen2.5-72B-Instruct
 
 ### 接入现有 Zep 应用
 
+如果你接入的是 **MiroFish**，不要把下面这段 `ZepClient(...)` 示例手动加到源码里。
+
+直接运行：
+
+```bash
+bash install_mirofish.sh
+```
+
+按提示填写 `LLM API`、`OpenZep API Key`、`OpenZep URL` 和 `MiroFish 路径` 即可。脚本会自动安装 OpenZep、更新 `.env`、替换 MiroFish 关键文件中的 Zep 配置。
+
+详细说明见 [INSTALL.md](./INSTALL.md)。
+
+下面这段 Python 示例，适用于你自己写的独立 Zep 客户端应用：
+
 ```python
 from zep_python import ZepClient
 

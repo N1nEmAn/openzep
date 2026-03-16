@@ -13,6 +13,51 @@ success() { echo -e "${GREEN}[ OK ]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error()   { echo -e "${RED}[ERR ]${NC} $*"; exit 1; }
 
+prompt_value() {
+    local var_name="$1"
+    local prompt_text="$2"
+    local default_value="${3:-}"
+    local secret="${4:-0}"
+    local required="${5:-1}"
+    local current_value="${!var_name:-}"
+
+    if [ -n "$current_value" ]; then
+        printf -v "$var_name" '%s' "$current_value"
+        return 0
+    fi
+
+    if [ ! -t 0 ]; then
+        if [ "$required" = "1" ] && [ -z "$default_value" ]; then
+            error "${var_name} 未提供，且当前为非交互模式"
+        fi
+        printf -v "$var_name" '%s' "$default_value"
+        return 0
+    fi
+
+    if [ -n "$default_value" ]; then
+        printf "%b" "${BOLD}${prompt_text} [默认: ${default_value}]: ${NC}"
+    else
+        printf "%b" "${BOLD}${prompt_text}: ${NC}"
+    fi
+
+    if [ "$secret" = "1" ]; then
+        read -rs current_value
+        echo
+    else
+        read -r current_value
+    fi
+
+    if [ -z "$current_value" ]; then
+        current_value="$default_value"
+    fi
+
+    if [ "$required" = "1" ] && [ -z "$current_value" ]; then
+        error "${var_name} 不能为空"
+    fi
+
+    printf -v "$var_name" '%s' "$current_value"
+}
+
 echo -e ""
 echo -e "${BOLD}${CYAN}╔══════════════════════════════════════╗${NC}"
 echo -e "${BOLD}${CYAN}║        OpenZep 安装向导              ║${NC}"
@@ -36,48 +81,28 @@ else
     echo "支持任意 OpenAI 兼容接口（OpenAI、SiliconFlow、本地 Ollama 等）"
     echo
 
-    printf "%b" "${BOLD}LLM Base URL（如 https://api.openai.com/v1）: ${NC}"
-    read -r LLM_BASE_URL
-    [ -z "$LLM_BASE_URL" ] && error "LLM_BASE_URL 不能为空"
-
-    printf "%b" "${BOLD}LLM API Key: ${NC}"
-    read -rs LLM_API_KEY; echo
-    [ -z "$LLM_API_KEY" ] && error "LLM_API_KEY 不能为空"
-
-    printf "%b" "${BOLD}LLM 模型名称（如 gpt-4o、anthropic/claude-sonnet-4.6）: ${NC}"
-    read -r LLM_MODEL
-    [ -z "$LLM_MODEL" ] && error "LLM_MODEL 不能为空"
+    prompt_value "LLM_BASE_URL" "LLM Base URL（如 https://api.openai.com/v1）"
+    prompt_value "LLM_API_KEY" "LLM API Key" "" 1
+    prompt_value "LLM_MODEL" "LLM 模型名称（如 gpt-4o、anthropic/claude-sonnet-4.6）"
 
     echo
     echo -e "${BOLD}── 第 2 步：Embedding 配置 ──────────────────${NC}"
     echo "如果 LLM 端点不支持 embedding（如 Anthropic 官方 API），需单独配置 Embedder。"
-    printf "%b" "${BOLD}是否单独配置 Embedder？[y/N]: ${NC}"
-    read -r SEPARATE_EMBEDDER
+    prompt_value "SEPARATE_EMBEDDER" "是否单独配置 Embedder？[y/N]" "N" 0 0
 
     if [[ "$SEPARATE_EMBEDDER" =~ ^[Yy]$ ]]; then
-        printf "%b" "${BOLD}Embedder Base URL（如 https://api.siliconflow.cn/v1）: ${NC}"
-        read -r EMBEDDER_BASE_URL
-        [ -z "$EMBEDDER_BASE_URL" ] && error "EMBEDDER_BASE_URL 不能为空"
-
-        printf "%b" "${BOLD}Embedder API Key: ${NC}"
-        read -rs EMBEDDER_API_KEY; echo
-        [ -z "$EMBEDDER_API_KEY" ] && error "EMBEDDER_API_KEY 不能为空"
-
-        printf "%b" "${BOLD}Embedder 模型名称（默认 BAAI/bge-m3）: ${NC}"
-        read -r EMBEDDER_MODEL
-        EMBEDDER_MODEL=${EMBEDDER_MODEL:-BAAI/bge-m3}
+        prompt_value "EMBEDDER_BASE_URL" "Embedder Base URL（如 https://api.siliconflow.cn/v1）"
+        prompt_value "EMBEDDER_API_KEY" "Embedder API Key" "" 1
+        prompt_value "EMBEDDER_MODEL" "Embedder 模型名称" "BAAI/bge-m3" 0 0
     else
         EMBEDDER_BASE_URL=""
         EMBEDDER_API_KEY=""
-        printf "%b" "${BOLD}Embedder 模型名称（默认 text-embedding-3-small）: ${NC}"
-        read -r EMBEDDER_MODEL
-        EMBEDDER_MODEL=${EMBEDDER_MODEL:-text-embedding-3-small}
+        prompt_value "EMBEDDER_MODEL" "Embedder 模型名称" "text-embedding-3-small" 0 0
     fi
 
     echo
     echo -e "${BOLD}── 第 3 步：OpenZep API Key ──────────────────${NC}"
-    printf "%b" "${BOLD}设置服务 API Key（留空自动生成）: ${NC}"
-    read -rs API_KEY; echo
+    prompt_value "API_KEY" "设置服务 API Key（留空自动生成）" "" 1 0
     if [ -z "$API_KEY" ]; then
         API_KEY="openzep-$(cat /dev/urandom | tr -dc 'a-z0-9' | head -c 12)"
         info "已生成随机 API Key: ${BOLD}${API_KEY}${NC}"
@@ -85,9 +110,7 @@ else
 
     echo
     echo -e "${BOLD}── 第 4 步：Neo4j 密码 ───────────────────────${NC}"
-    printf "%b" "${BOLD}Neo4j 密码（留空默认 password123）: ${NC}"
-    read -rs NEO4J_PASSWORD; echo
-    NEO4J_PASSWORD=${NEO4J_PASSWORD:-password123}
+    prompt_value "NEO4J_PASSWORD" "Neo4j 密码" "password123" 1 0
 
     cat > .env << EOF
 # LLM

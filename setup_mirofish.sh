@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # setup_mirofish.sh — 将 MiroFish 接入 OpenZep 的一键配置脚本
-# 用法: bash setup_mirofish.sh <MIROFISH_PATH>
+# 用法: bash setup_mirofish.sh [MIROFISH_PATH]
 # 示例: bash setup_mirofish.sh /home/N1nE/MiroFish
 
 set -euo pipefail
@@ -17,20 +17,67 @@ success() { echo -e "  ${GREEN}[OK]${NC}   $*"; }
 warn()    { echo -e "  ${YELLOW}[WARN]${NC} $*"; }
 die()     { echo -e "  ${RED}[ERR]${NC}  $*"; exit 1; }
 
-# ── 0. 参数检查 ──────────────────────────────────────────────────────────────
+prompt_value() {
+    local var_name="$1"
+    local prompt_text="$2"
+    local default_value="${3:-}"
+    local secret="${4:-0}"
+    local required="${5:-1}"
+    local current_value="${!var_name:-}"
 
-if [[ $# -lt 1 ]]; then
-    echo -e "${BOLD}用法:${NC} bash setup_mirofish.sh <MIROFISH_PATH>"
-    echo -e "${BOLD}示例:${NC} bash setup_mirofish.sh /home/N1nE/MiroFish"
-    exit 1
-fi
+    if [ -n "$current_value" ]; then
+        printf -v "$var_name" '%s' "$current_value"
+        return 0
+    fi
 
-MIROFISH="${1%/}"
-[[ -d "$MIROFISH" ]] || die "目录不存在: $MIROFISH"
+    if [ ! -t 0 ]; then
+        if [ "$required" = "1" ] && [ -z "$default_value" ]; then
+            die "${var_name} 未提供，且当前为非交互模式"
+        fi
+        printf -v "$var_name" '%s' "$default_value"
+        return 0
+    fi
+
+    if [ -n "$default_value" ]; then
+        printf "%b" "${BOLD}${prompt_text} [默认: ${default_value}]: ${NC}"
+    else
+        printf "%b" "${BOLD}${prompt_text}: ${NC}"
+    fi
+
+    if [ "$secret" = "1" ]; then
+        read -rs current_value
+        echo
+    else
+        read -r current_value
+    fi
+
+    if [ -z "$current_value" ]; then
+        current_value="$default_value"
+    fi
+
+    if [ "$required" = "1" ] && [ -z "$current_value" ]; then
+        die "${var_name} 不能为空"
+    fi
+
+    printf -v "$var_name" '%s' "$current_value"
+}
 
 OPENZEP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OPENZEP_URL="http://localhost:8000"
-OPENZEP_API_KEY="$(grep -E '^API_KEY=' "$OPENZEP_DIR/.env" 2>/dev/null | cut -d= -f2 | tr -d '\r' || echo 'openzep-secret-2026')"
+DEFAULT_MIROFISH="$(cd "$OPENZEP_DIR/.." && pwd)"
+ENV_API_KEY="$(grep -E '^API_KEY=' "$OPENZEP_DIR/.env" 2>/dev/null | cut -d= -f2 | tr -d '\r' || true)"
+
+# ── 0. 参数与配置读取 ──────────────────────────────────────────────────────────
+
+if [[ $# -ge 1 && -n "${1:-}" ]]; then
+    MIROFISH_PATH="$1"
+fi
+
+prompt_value "MIROFISH_PATH" "MiroFish 项目路径" "$DEFAULT_MIROFISH" 0 1
+MIROFISH="${MIROFISH_PATH%/}"
+[[ -d "$MIROFISH" ]] || die "目录不存在: $MIROFISH"
+
+prompt_value "OPENZEP_URL" "OpenZep 服务地址" "${OPENZEP_URL:-http://localhost:8000}" 0 1
+prompt_value "OPENZEP_API_KEY" "OpenZep API Key" "${OPENZEP_API_KEY:-$ENV_API_KEY}" 1 1
 
 echo
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -41,16 +88,29 @@ echo -e "  OpenZep  地址: ${CYAN}$OPENZEP_URL${NC}"
 echo -e "  OpenZep  密钥: ${CYAN}$OPENZEP_API_KEY${NC}"
 echo
 
-# ── 1. 读取 OpenZep 配置 ─────────────────────────────────────────────────────
+# ── 1. 同步 OpenZep 配置 ─────────────────────────────────────────────────────
 
-echo -e "${BOLD}[1/4] 读取 OpenZep 配置${NC}"
+echo -e "${BOLD}[1/4] 同步 OpenZep 配置${NC}"
 info "API Key : $OPENZEP_API_KEY"
 info "Base URL: $OPENZEP_URL"
 info "API URL : $OPENZEP_URL/api/v2"
-success "配置读取完成"
+
+if [[ -f "$OPENZEP_DIR/.env" ]]; then
+    cp "$OPENZEP_DIR/.env" "$OPENZEP_DIR/.env.bak"
+else
+    touch "$OPENZEP_DIR/.env"
+fi
+
+if grep -qE '^API_KEY=' "$OPENZEP_DIR/.env" 2>/dev/null; then
+    sed -i "s|^API_KEY=.*|API_KEY=${OPENZEP_API_KEY}|" "$OPENZEP_DIR/.env"
+else
+    echo "API_KEY=${OPENZEP_API_KEY}" >> "$OPENZEP_DIR/.env"
+fi
+
+success "OpenZep .env 已同步"
 echo
 
-# ── 2. 修改 MiroFish 的三个核心文件 ─────────────────────────────────────────
+# ── 2. 修改 MiroFish 的 Zep 客户端文件 ─────────────────────────────────────
 
 echo -e "${BOLD}[2/4] 修改 MiroFish Python 文件${NC}"
 
@@ -58,6 +118,8 @@ TARGET_FILES=(
     "graph_builder.py"
     "zep_tools.py"
     "zep_graph_memory_updater.py"
+    "zep_entity_reader.py"
+    "oasis_profile_generator.py"
 )
 
 PATCHED=0
@@ -82,6 +144,7 @@ for fname in "${TARGET_FILES[@]}"; do
     fi
 
     sed -i 's/Zep(api_key=self\.api_key)/Zep(api_key=self.api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
+    sed -i 's/Zep(api_key=self\.zep_api_key)/Zep(api_key=self.zep_api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
 
     success "已修改: $fname"
     ((PATCHED++)) || true
