@@ -1,6 +1,27 @@
 # OpenZep 接入 MiroFish 安装说明
 
-## 手动安装
+## 一体化安装
+
+在 `openzep` 目录执行：
+
+```bash
+bash install_mirofish.sh
+```
+
+这是推荐入口。脚本默认会：
+
+- 先执行 `setup_docker.sh`
+- 在启动 Docker 前写好 `openzep/.env`
+- 再执行 `setup_mirofish.sh`
+- 自动把 MiroFish 指到 `OpenZep`
+
+如果你不想用 Docker，而是想本机直接跑 `uvicorn`：
+
+```bash
+OPENZEP_INSTALL_MODE=local bash install_mirofish.sh
+```
+
+## 交互式安装说明
 
 在 `openzep` 目录执行：
 
@@ -21,6 +42,8 @@ bash install_mirofish.sh
 
 - 安装并启动 OpenZep
 - 写入或更新 `openzep/.env`
+- 在 Docker 模式下，把容器内需要的 `localhost` / `127.0.0.1` 自动改成 `host.docker.internal`
+- 在 Docker 模式下，先写入 `NEO4J_PASSWORD`，再启动 `docker compose`
 - 更新 MiroFish 根目录 `.env` 中的 `ZEP_API_KEY` 和 `ZEP_BASE_URL`
 - 自动替换 MiroFish 后端关键文件中的 Zep 客户端配置
 - 验证 `http://localhost:8000/healthz` 是否可访问
@@ -48,8 +71,9 @@ bash setup_docker.sh
 `install_mirofish.sh`
 
 - 一体化入口
-- 会先执行 `setup.sh`
+- 默认会先执行 `setup_docker.sh`
 - 再执行 `setup_mirofish.sh`
+- 可通过 `OPENZEP_INSTALL_MODE=local` 切换为 `setup.sh`
 
 `setup.sh`
 
@@ -77,10 +101,12 @@ ZEP_BASE_URL=http://localhost:8000/api/v2
 如果是 agent 或 CI 环境，建议直接传环境变量，避免交互输入：
 
 ```bash
+OPENZEP_INSTALL_MODE="docker" \
 LLM_BASE_URL="https://your-llm-base-url/v1" \
 LLM_API_KEY="your-llm-api-key" \
 LLM_MODEL="your-llm-model" \
 API_KEY="your-openzep-api-key" \
+NEO4J_PASSWORD="your-neo4j-password" \
 OPENZEP_URL="http://localhost:8000" \
 MIROFISH_PATH="/absolute/path/to/MiroFish" \
 bash install_mirofish.sh

@@ -186,7 +186,7 @@ success ".env 更新完成"
 CONFIG_PY=$(find "$MIROFISH" -path '*/app/config.py' -type f 2>/dev/null | head -1)
 if [[ -n "$CONFIG_PY" ]]; then
     if ! grep -q 'ZEP_BASE_URL' "$CONFIG_PY" 2>/dev/null; then
-        sed -i "s|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')\n    ZEP_BASE_URL = os.environ.get('ZEP_BASE_URL', 'https://api.getzep.com/api/v2')|" "$CONFIG_PY"
+        sed -i "s|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')\n    ZEP_BASE_URL = os.environ.get('ZEP_BASE_URL', 'http://localhost:8000/api/v2')|" "$CONFIG_PY"
         success "config.py 已添加 ZEP_BASE_URL"
     else
         info "config.py 已含 ZEP_BASE_URL，跳过"
@@ -202,7 +202,7 @@ if curl -sf --max-time 3 "${OPENZEP_URL}/healthz" >/dev/null 2>&1; then
     success "OpenZep 服务在线: $OPENZEP_URL"
 else
     warn "OpenZep 未响应（${OPENZEP_URL}/healthz）"
-    warn "请先运行: cd $OPENZEP_DIR && bash setup.sh"
+    warn "请先完成 OpenZep 安装并启动服务，再重试接入脚本"
 fi
 
 echo
@@ -221,8 +221,8 @@ echo
 echo -e "  ${BOLD}下一步:${NC}"
 echo -e "  1. 确认 MiroFish Config.py 中有以下内容:"
 echo    "       ZEP_BASE_URL = os.getenv('ZEP_BASE_URL', 'http://localhost:8000/api/v2')"
-echo -e "  2. 启动 OpenZep:"
-echo -e "     ${CYAN}cd $OPENZEP_DIR && bash setup.sh${NC}"
+echo -e "  2. 确认 OpenZep 已启动并可访问:"
+echo -e "     ${CYAN}${OPENZEP_URL}/healthz${NC}"
 echo -e "  3. 重启 MiroFish，内存服务将指向本地 OpenZep"
 echo
 echo -e "  备份文件均以 ${YELLOW}.bak${NC} 结尾，如需回滚直接还原即可"

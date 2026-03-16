@@ -82,7 +82,20 @@ LLM_MODEL=Qwen/Qwen2.5-72B-Instruct
 bash install_mirofish.sh
 ```
 
-按提示填写 `LLM API`、`OpenZep API Key`、`OpenZep URL` 和 `MiroFish 路径` 即可。脚本会自动安装 OpenZep、更新 `.env`、替换 MiroFish 关键文件中的 Zep 配置。
+按提示填写 `LLM API`、`OpenZep API Key`、`OpenZep URL` 和 `MiroFish 路径` 即可。
+
+默认会走 `docker` 安装模式，并在启动容器前自动写好 `.env`：
+
+- 自动配置 `LLM_*` / `EMBEDDER_*`
+- 自动修正 Docker 内访问宿主机的 `localhost` / `127.0.0.1`
+- 自动写入 `NEO4J_PASSWORD`
+- 自动更新 MiroFish 的 `ZEP_BASE_URL`、`ZEP_API_KEY` 和关键 Zep 客户端文件
+
+如果你明确要本机直接跑 `uvicorn`，可以切到本地模式：
+
+```bash
+OPENZEP_INSTALL_MODE=local bash install_mirofish.sh
+```
 
 详细说明见 [INSTALL.md](./INSTALL.md)。
 
