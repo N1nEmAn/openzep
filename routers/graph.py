@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 @router.post("/graph")
 async def graph_add(body: GraphAddRequest, request: Request):
     graphiti = get_graphiti(request)
+    ref_time = body.created_at or datetime.now(timezone.utc)
     ontology = get_ontology(graph_id=body.graph_id, user_id=body.user_id)
     name = await add_single_episode(
         graphiti,
@@ -49,12 +50,17 @@ async def graph_add(body: GraphAddRequest, request: Request):
         data=body.data,
         ep_type=body.type,
         source_description=body.source_description,
-        created_at=body.created_at,
+        created_at=ref_time,
         entity_types=ontology.entity_types if ontology else None,
         edge_types=ontology.edge_types if ontology else None,
         edge_type_map=ontology.edge_type_map if ontology else None,
     )
-    return {"uuid": name, "graph_id": body.graph_id}
+    return {
+        "uuid": name,
+        "graph_id": body.graph_id,
+        "content": body.data,
+        "created_at": ref_time.isoformat(),
+    }
 
 
 # ── in-memory episode processing tracker ─────────────────────────────────────
