@@ -96,6 +96,8 @@ bash install_mirofish.sh
 - 自动修正 Docker 内访问宿主机的 `localhost` / `127.0.0.1`
 - 自动写入 `NEO4J_PASSWORD`
 - 自动更新 MiroFish 的 `ZEP_BASE_URL`、`ZEP_API_KEY` 和关键 Zep 客户端文件
+- 如果检测到 MiroFish 使用 Docker Compose，会自动把容器内需要的 `localhost` / `127.0.0.1` 改成 `host.docker.internal`
+- 会自动生成 compose override 文件，为 `mirofish` 服务补上 `host.docker.internal:host-gateway`
 
 如果你明确要本机直接跑 `uvicorn`，可以切到本地模式：
 

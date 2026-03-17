@@ -59,6 +59,8 @@ bash install_mirofish.sh
 - 在 Docker 模式下，先写入 `NEO4J_PASSWORD`，再启动 `docker compose`
 - 更新 MiroFish 根目录 `.env` 中的 `ZEP_API_KEY` 和 `ZEP_BASE_URL`
 - 自动替换 MiroFish 后端关键文件中的 Zep 客户端配置
+- 如果检测到 MiroFish 使用 Docker Compose，且 OpenZep 地址是 `localhost` / `127.0.0.1`，会自动改写为 `host.docker.internal`
+- 会为 MiroFish 自动生成 compose override 文件，补上 `host.docker.internal:host-gateway`
 - 验证 `http://localhost:8000/healthz` 是否可访问
 
 不需要手动把 `from zep_python import ZepClient` 粘贴到 MiroFish 的任何源码文件里。
