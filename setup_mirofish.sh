@@ -189,7 +189,7 @@ else
 fi
 
 if grep -qE '^API_KEY=' "$OPENZEP_DIR/.env" 2>/dev/null; then
-    sed -i "s|^API_KEY=.*|API_KEY=${OPENZEP_API_KEY}|" "$OPENZEP_DIR/.env"
+    sed -i '' "s|^API_KEY=.*|API_KEY=${OPENZEP_API_KEY}|" "$OPENZEP_DIR/.env"
 else
     echo "API_KEY=${OPENZEP_API_KEY}" >> "$OPENZEP_DIR/.env"
 fi
@@ -230,8 +230,8 @@ for fname in "${TARGET_FILES[@]}"; do
         continue
     fi
 
-    sed -i 's/Zep(api_key=self\.api_key)/Zep(api_key=self.api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
-    sed -i 's/Zep(api_key=self\.zep_api_key)/Zep(api_key=self.zep_api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
+    sed -i '' 's/Zep(api_key=self\.api_key)/Zep(api_key=self.api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
+    sed -i '' 's/Zep(api_key=self\.zep_api_key)/Zep(api_key=self.zep_api_key, base_url=Config.ZEP_BASE_URL)/g' "$fpath"
 
     success "已修改: $fname"
     ((PATCHED++)) || true
@@ -256,7 +256,7 @@ update_env() {
     local key="$1"
     local val="$2"
     if grep -qE "^${key}=" "$MIROFISH_ENV" 2>/dev/null; then
-        sed -i "s|^${key}=.*|${key}=${val}|" "$MIROFISH_ENV"
+        sed -i '' "s|^${key}=.*|${key}=${val}|" "$MIROFISH_ENV"
         info "更新: ${key}=${val}"
     else
         echo "${key}=${val}" >> "$MIROFISH_ENV"
@@ -277,7 +277,7 @@ fi
 CONFIG_PY=$(find "$MIROFISH" -path '*/app/config.py' -type f 2>/dev/null | head -1)
 if [[ -n "$CONFIG_PY" ]]; then
     if ! grep -q 'ZEP_BASE_URL' "$CONFIG_PY" 2>/dev/null; then
-        sed -i "s|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')\n    ZEP_BASE_URL = os.environ.get('ZEP_BASE_URL', 'http://localhost:8000/api/v2')|" "$CONFIG_PY"
+        sed -i '' "s|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')|ZEP_API_KEY = os.environ.get('ZEP_API_KEY')\n    ZEP_BASE_URL = os.environ.get('ZEP_BASE_URL', 'http://localhost:8000/api/v2')|" "$CONFIG_PY"
         success "config.py 已添加 ZEP_BASE_URL"
     else
         info "config.py 已含 ZEP_BASE_URL，跳过"

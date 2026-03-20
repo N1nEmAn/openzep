@@ -12,6 +12,7 @@ import openai
 
 from deps import get_graphiti, verify_api_key
 from engine.data_ingestion import normalize_episode_body, normalize_episode_type
+from engine.graphiti_engine import add_single_episode
 from models.graph import (
     EdgeListByGraphRequest,
     EdgeListResponse,
