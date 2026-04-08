@@ -1,0 +1,2 @@
+# git忽略windows跟linux不同系统下的换行符
+* text=auto eol=lf

@@ -12,3 +12,6 @@ build/
 *.egg-info/
 /home/N1nE/Progress/202603/mirofish
 mirofish/
+
+# cuatom
+.env.bak
