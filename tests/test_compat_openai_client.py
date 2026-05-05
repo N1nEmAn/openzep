@@ -7,6 +7,21 @@ from engine.compat_openai_client import CompatOpenAIGenericClient
 
 
 class CompatOpenAIClientTests(unittest.TestCase):
+    def test_builds_strict_openai_schema_for_extracted_entities(self):
+        schema = CompatOpenAIGenericClient._openai_strict_schema(
+            ExtractedEntities.model_json_schema(),
+        )
+
+        self.assertIs(schema["additionalProperties"], False)
+        self.assertEqual(schema["required"], ["extracted_entities"])
+
+        entity_schema = schema["$defs"]["ExtractedEntity"]
+        self.assertIs(entity_schema["additionalProperties"], False)
+        self.assertEqual(
+            entity_schema["required"],
+            ["name", "entity_type_id", "episode_indices"],
+        )
+
     def test_wraps_single_edge_payload_for_extracted_edges(self):
         payload = {
             "source_entity_name": "Alice",

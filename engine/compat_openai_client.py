@@ -55,6 +55,47 @@ class CompatOpenAIGenericClient(OpenAIGenericClient):
         return text
 
     @staticmethod
+    def _openai_strict_schema(schema: Any) -> Any:
+        if isinstance(schema, dict):
+            normalized = dict(schema)
+
+            properties = normalized.get("properties")
+            if normalized.get("type") == "object" or isinstance(properties, dict):
+                normalized["additionalProperties"] = False
+                if isinstance(properties, dict):
+                    existing_required = normalized.get("required")
+                    if isinstance(existing_required, list):
+                        required = list(dict.fromkeys(existing_required + list(properties.keys())))
+                    else:
+                        required = list(properties.keys())
+                    normalized["required"] = required
+
+            for key in ("properties", "$defs", "definitions"):
+                value = normalized.get(key)
+                if isinstance(value, dict):
+                    normalized[key] = {
+                        name: CompatOpenAIGenericClient._openai_strict_schema(sub_schema)
+                        for name, sub_schema in value.items()
+                    }
+
+            for key in ("items", "anyOf", "oneOf", "allOf"):
+                value = normalized.get(key)
+                if isinstance(value, dict):
+                    normalized[key] = CompatOpenAIGenericClient._openai_strict_schema(value)
+                elif isinstance(value, list):
+                    normalized[key] = [
+                        CompatOpenAIGenericClient._openai_strict_schema(item)
+                        for item in value
+                    ]
+
+            return normalized
+
+        if isinstance(schema, list):
+            return [CompatOpenAIGenericClient._openai_strict_schema(item) for item in schema]
+
+        return schema
+
+    @staticmethod
     def _normalize_payload(
         payload: Any,
         response_model: type[BaseModel] | None,
@@ -147,7 +188,8 @@ class CompatOpenAIGenericClient(OpenAIGenericClient):
                     "type": "json_schema",
                     "json_schema": {
                         "name": getattr(response_model, "__name__", "structured_response"),
-                        "schema": response_model.model_json_schema(),
+                        "strict": True,
+                        "schema": self._openai_strict_schema(response_model.model_json_schema()),
                     },
                 }
 
