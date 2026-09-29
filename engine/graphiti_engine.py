@@ -168,13 +168,13 @@ async def add_single_episode(
     entity_types: dict[str, type[BaseModel]] | None = None,
     edge_types: dict[str, type[BaseModel]] | None = None,
     edge_type_map: dict[tuple[str, str], list[str]] | None = None,
-) -> str:
-    """Add a single episode to the graph, return its name."""
+) -> tuple[str, str]:
+    """Add a single episode to the graph, return (uuid, name)."""
     ref_time = created_at or datetime.now(timezone.utc)
     name = f"ep_{graph_id}_{ref_time.timestamp()}"
     source = normalize_episode_type(ep_type)
     episode_body = normalize_episode_body(data, ep_type)
-    await graphiti.add_episode(
+    result = await graphiti.add_episode(
         name=name,
         episode_body=episode_body,
         source_description=source_description,
@@ -185,7 +185,7 @@ async def add_single_episode(
         edge_types=edge_types,
         edge_type_map=edge_type_map,
     )
-    return name
+    return result.episode.uuid, name
 
 
 async def add_messages_to_graph(
@@ -269,4 +269,18 @@ async def delete_fact_by_uuid(graphiti: Graphiti, uuid: str) -> bool:
         await edge.delete(graphiti.driver)
         return True
     except Exception:
+        return False
+
+
+async def delete_episode_by_uuid(graphiti: Graphiti, uuid: str) -> bool:
+    """Delete a single episode by UUID.
+
+    Returns True if the episode was found and removed, False otherwise.
+    Uses graphiti.remove_episode for full cascade cleanup (edges, entities).
+    """
+    try:
+        await graphiti.remove_episode(uuid)
+        return True
+    except Exception:
+        logger.exception("Failed to delete episode %s", uuid)
         return False

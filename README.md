@@ -223,7 +223,15 @@ OpenZep 已通过与 [MiroFish](https://github.com/666ghj/MiroFish)（多智能�
 |--------|------|-------------|
 | `GET` | `/api/v2/facts/{uuid}` | 获取单个知识图谱 fact |
 | `DELETE` | `/api/v2/facts/{uuid}` | 删除单个 fact |
+| `POST` | `/api/v2/graph` | 添加 episode（单条） |
+| `POST` | `/api/v2/graph-batch` | 批量添加 episode |
+| `GET` | `/api/v2/graph/episodes/{uuid}` | 获取单个 episode 详情 |
+| `DELETE` | `/api/v2/graph/episodes/{uuid}` | 删除单个 episode（级联清理关联边与孤儿节点） |
 | `POST` | `/api/v2/graph/search` | 知识图谱语义搜索 |
+| `GET` | `/api/v2/graph/node/{uuid}` | 获取单个图节点 |
+| `GET` | `/api/v2/graph/node/{uuid}/entity-edges` | 获取节点关联的边 |
+| `GET` | `/api/v2/graph/{graph_id}/statistics` | 获取图谱统计信息 |
+| `DELETE` | `/api/v2/graph/{graph_id}` | 删除整个图谱 |
 | `GET` | `/api/v2/graph/list-all` | 列出所有知识图谱（含节点/边数量） |
 
 ### Batch ingestion

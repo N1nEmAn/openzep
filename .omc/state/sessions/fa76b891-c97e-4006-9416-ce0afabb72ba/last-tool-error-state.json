@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /home/N1nE/Progress/202603/openzep/.venv/lib/python3.14/site-packages/graphiti_core\\necho \\\"===neo4j_driver clone + execute + raw queries===\\\"\\ngrep -n \\\"def clone\\\\|def execute\\\\|async...",
-  "error": "Exit code 1\n===neo4j_driver clone + execute + raw queries===\n69:        database: str = 'neo4j',\n76:        self._database = database\n154:        async with self.client.session(database=self._database) as session:\n163:    async def execute_query(self, cypher_query_: LiteralString, **kwargs: Any) -> EagerResult:\n164:        # Check if database_ is provided in kwargs.\n169:        params.setdefault('database_', self._database)\n179:    def session(self, database: str | None = None) -> GraphDriverSes...",
-  "timestamp": "2026-06-15T07:43:49.103Z",
-  "retry_count": 1
-}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/home/N1nE/Progress/202606/openzep\"}",
-  "error": "EISDIR: illegal operation on a directory, read '/home/N1nE/Progress/202606/openzep'",
-  "timestamp": "2026-06-15T08:04:02.115Z",
-  "retry_count": 1
-}

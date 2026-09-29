@@ -3,7 +3,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from graphiti_core.edges import EntityEdge
 from graphiti_core.errors import GroupsEdgesNotFoundError, GroupsNodesNotFoundError
 from graphiti_core.llm_client.errors import RateLimitError
@@ -14,7 +14,7 @@ import openai
 from deps import get_graphiti, verify_api_key
 from config import settings
 from engine.data_ingestion import normalize_episode_body, normalize_episode_type
-from engine.graphiti_engine import add_single_episode
+from engine.graphiti_engine import add_single_episode, delete_episode_by_uuid
 from models.graph import (
     EdgeListByGraphRequest,
     EdgeListResponse,
@@ -51,7 +51,7 @@ async def graph_add(body: GraphAddRequest, request: Request):
     graphiti = get_graphiti(request)
     ref_time = body.created_at or datetime.now(timezone.utc)
     ontology = get_ontology(graph_id=body.graph_id, user_id=body.user_id)
-    name = await add_single_episode(
+    ep_uuid, ep_name = await add_single_episode(
         graphiti,
         graph_id=body.graph_id,
         data=body.data,
@@ -63,7 +63,8 @@ async def graph_add(body: GraphAddRequest, request: Request):
         edge_type_map=ontology.edge_type_map if ontology else None,
     )
     return {
-        "uuid": name,
+        "uuid": ep_uuid,
+        "name": ep_name,
         "graph_id": body.graph_id,
         "content": body.data,
         "created_at": ref_time.isoformat(),
@@ -588,24 +589,34 @@ async def get_episode_by_uuid(uuid: str, request: Request):
     # Real episode in Neo4j
     try:
         ep = await EpisodicNode.get_by_uuid(graphiti.driver, uuid=uuid)
-        return EpisodeResponse(
-            uuid=ep.uuid,
-            name=ep.name,
-            content=ep.content,
-            source_description=getattr(ep, "source_description", ""),
-            source=str(getattr(ep, "source", "message")),
-            created_at=getattr(ep, "created_at", None) or now,
-            group_id=getattr(ep, "group_id", ""),
-            processed=True,
-        )
     except Exception:
-        return EpisodeResponse(
-            uuid=uuid,
-            name="",
-            content="",
-            created_at=now,
-            processed=True,
-        )
+        raise HTTPException(status_code=404, detail="Episode not found")
+
+    return EpisodeResponse(
+        uuid=ep.uuid,
+        name=ep.name,
+        content=ep.content,
+        source_description=getattr(ep, "source_description", ""),
+        source=str(getattr(ep, "source", "message")),
+        created_at=getattr(ep, "created_at", None) or now,
+        group_id=getattr(ep, "group_id", ""),
+        processed=True,
+    )
+
+
+@router.delete("/graph/episodes/{uuid}")
+async def delete_episode_by_uuid_route(uuid: str, request: Request):
+    graphiti = get_graphiti(request)
+
+    # Fast path: fake uuid from add_batch that lives only in the in-memory tracker.
+    if uuid in _episode_status:
+        del _episode_status[uuid]
+        return {"message": "Episode deleted", "uuid": uuid}
+
+    deleted = await delete_episode_by_uuid(graphiti, uuid)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Episode not found")
+    return {"message": "Episode deleted", "uuid": uuid}
 
 
 # ── graph statistics ──────────────────────────────────────────────────────────
